@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Random;
 
 @Service
 @AllArgsConstructor
@@ -38,6 +39,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserSessionRepository userSessionRepository;
+    private final EmailService emailService;
 
     public DefaultResponse login(LoginRequest loginRequest){
         try {
@@ -79,13 +81,24 @@ public class AuthService {
         }
         Account newAcc = modelMapper.map(registerRequest, Account.class);
         // encoder password
-        Role defaultRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Default role not found"));
+        Role defaultRole = roleRepository.findByName(registerRequest.getRoleName())
+                .orElse(null);
+        if (defaultRole == null) {
+            return new DefaultResponse(404, "Không tìm thấy: " + registerRequest.getRoleName(), false);
+        }
         newAcc.setRole(defaultRole);
         newAcc.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
         //save
         accountRepository.save(newAcc);
+
+        /// active code
+
+        int code = 100000 + new Random().nextInt(900000);
+        String activationCode = String.valueOf(code);
+
+        // Gửi email
+        emailService.sendActivationEmail(newAcc.getEmail(), activationCode);
         return new DefaultResponse(200,"Register success: "+newAcc.getEmail(),true);
     }
 }

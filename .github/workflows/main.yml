@@ -24,7 +24,7 @@ jobs:
       - name: Deploy via SSH and Docker Compose
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /path/to/your/project
+            cd /var/www/deliverybe/snapgo-be
             git pull origin main
             docker-compose down  # Optional: if you want to stop old containers
             docker-compose up --build -d  # Build and run containers in detached mode

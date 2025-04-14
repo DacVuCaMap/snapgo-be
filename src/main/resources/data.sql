@@ -1,0 +1,5 @@
+INSERT INTO roles (id, name) VALUES (1, 'USER') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+INSERT INTO roles (id, name) VALUES (2, 'ADMIN') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+INSERT INTO roles (id, name) VALUES (3, 'SHIPPER') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+INSERT INTO roles (id, name) VALUES (4, 'PARTNER') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+INSERT INTO roles (id, name) VALUES (5, 'EMP') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;

@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  app:
+    image: delivery-app:2.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/deliveryapp
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=@springboot2539
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=deliveryapp
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=@springboot2539
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:

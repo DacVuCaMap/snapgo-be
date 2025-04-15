@@ -34,7 +34,7 @@ public class AuthController {
             // Tạo cookie
             Cookie jwtCookie = new Cookie("jwt", jwt);
             jwtCookie.setHttpOnly(true);
-            jwtCookie.setSecure(false); // Set false nếu test local không dùng HTTPS
+            jwtCookie.setSecure(true); // Set false nếu test local không dùng HTTPS
             jwtCookie.setPath("/");
 
             // Tính maxAge dựa trên expirationTime

@@ -42,10 +42,9 @@ public class AuthController {
 
             // Tạo Set-Cookie thủ công (hỗ trợ SameSite)
             String cookie = String.format(
-                    "jwt=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d",
+                    "jwt=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d; Domain=.snapgo.vn",
                     jwt, maxAge
             );
-
             response.setHeader("Set-Cookie", cookie);
         }
 

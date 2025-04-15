@@ -12,4 +12,5 @@ public class LoginResponse {
     private LocalDateTime expirationTime;
     private String name;
     private String avatar;
+    private String email;
 }

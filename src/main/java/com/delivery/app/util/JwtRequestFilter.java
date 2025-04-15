@@ -5,6 +5,7 @@ import com.delivery.app.repository.UserSessionRepository;
 import com.delivery.app.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
@@ -26,8 +27,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private final UserSessionRepository userSessionRepository;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-
-
         String path = request.getRequestURI();
         // Bỏ qua filter cho Swagger UI và API docs
         if (path.startsWith("/swagger-ui/") || path.startsWith("/v3/api-docs/") ||
@@ -36,16 +35,27 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String authorizationHeader = request.getHeader("Authorization");
-
         String email = null;
         String jwt = null;
-        // Lấy JWT từ header
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            email = jwtUtil.extractUsername(jwt);
+
+        // 1. Lấy JWT từ cookie
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("jwt".equals(cookie.getName())) {
+                    jwt = cookie.getValue();
+                    break;
+                }
+            }
         }
 
+        // 2. Nếu không có JWT trong cookie, lấy từ header Authorization
+        if (jwt == null) {
+            final String authorizationHeader = request.getHeader("Authorization");
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                jwt = authorizationHeader.substring(7);
+            }
+        }
         // Kiểm tra token trong database
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserSession session = userSessionRepository.findByToken(jwt)

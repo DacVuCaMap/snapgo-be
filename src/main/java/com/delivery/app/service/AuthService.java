@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -70,6 +71,7 @@ public class AuthService {
             loginResponse.setToken(jwt);
             loginResponse.setName(account.getLastName()+" "+account.getFirstName());
             loginResponse.setAvatar(account.getAvatar());
+            loginResponse.setEmail(account.getEmail());
             return new DefaultResponse(200,"Login success",loginResponse,true);
         } catch (BadCredentialsException | UsernameNotFoundException e) {
             return new DefaultResponse(400,"Tài khoản hoặc mật khẩu không tồn tại");
@@ -100,5 +102,15 @@ public class AuthService {
         // Gửi email
         emailService.sendActivationEmail(newAcc.getEmail(), activationCode);
         return new DefaultResponse(200,"Register success: "+newAcc.getEmail(),true);
+    }
+
+    public DefaultResponse logoutAccount (String jwt){
+        UserSession session = userSessionRepository.findByToken(jwt).orElse(null);
+        if (session == null){
+            return new DefaultResponse(404,"Không tìm thấy phiên",false );
+        }
+        session.setActive(false);
+        userSessionRepository.save(session);
+        return new DefaultResponse(200,"Đăng xuất thành công",true);
     }
 }

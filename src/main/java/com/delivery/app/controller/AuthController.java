@@ -24,27 +24,37 @@ import java.time.LocalDateTime;
 public class AuthController {
     private final AuthService authService;
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         DefaultResponse defaultResponse = authService.login(loginRequest);
 
         if (defaultResponse.isSuccess() && defaultResponse.getValue() instanceof LoginResponse loginResponse) {
             String jwt = loginResponse.getToken();
 
-            // Tính maxAge từ thời gian hết hạn
+            // Tính maxAge
             LocalDateTime expirationTime = loginResponse.getExpirationTime();
             int maxAge;
             if (expirationTime != null) {
                 long secondsUntilExpiration = Duration.between(LocalDateTime.now(), expirationTime).getSeconds();
                 maxAge = (int) Math.max(secondsUntilExpiration, 0);
             } else {
-                maxAge = 24 * 60 * 60; // fallback 1 ngày
+                maxAge = 24 * 60 * 60;
             }
 
-            // Tạo Set-Cookie thủ công (hỗ trợ SameSite)
-            String cookie = String.format(
-                    "jwt=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d; Domain=.snapgo.vn",
-                    jwt, maxAge
-            );
+            boolean isLocal = request.getServerName().contains("localhost");
+
+            String cookie;
+            if (isLocal) {
+                cookie = String.format(
+                        "jwt=%s; Path=/; HttpOnly; SameSite=Lax; Max-Age=%d",
+                        jwt, maxAge
+                );
+            } else {
+                cookie = String.format(
+                        "jwt=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d; Domain=.snapgo.vn",
+                        jwt, maxAge
+                );
+            }
+
             response.setHeader("Set-Cookie", cookie);
         }
 
@@ -58,9 +68,9 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logoutAccount(HttpServletRequest request, HttpServletResponse response) {
-        String jwt="";
+        String jwt = "";
 
-        // 1. Lấy JWT từ cookie
+        // Lấy JWT từ cookie
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
@@ -71,27 +81,33 @@ public class AuthController {
             }
         }
 
-        // 2. Nếu không có JWT trong cookie, lấy từ header Authorization
-        if (jwt == null) {
+        // Nếu không có cookie, thử lấy từ Authorization header
+        if (jwt == null || jwt.isEmpty()) {
             final String authorizationHeader = request.getHeader("Authorization");
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 jwt = authorizationHeader.substring(7);
             }
         }
 
-
-
         DefaultResponse defaultResponse = authService.logoutAccount(jwt);
-        if (!defaultResponse.isSuccess()){
+
+        if (!defaultResponse.isSuccess()) {
             return ResponseEntity.ok().body(defaultResponse);
         }
-        // Clear cookie
+
+        // Clear cookie - phân biệt local/production
+        boolean isLocal = request.getServerName().contains("localhost");
+
         Cookie jwtCookie = new Cookie("jwt", null);
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true); // Giống lúc set login
+        jwtCookie.setSecure(!isLocal); // local thì không dùng Secure
         jwtCookie.setPath("/");
-        jwtCookie.setDomain(".snapgo.vn"); // QUAN TRỌNG: giống domain đã set lúc login
-        jwtCookie.setMaxAge(0); // clear
+        jwtCookie.setMaxAge(0); // xóa cookie
+
+        if (!isLocal) {
+            jwtCookie.setDomain(".snapgo.vn"); // chỉ set domain ở production
+        }
+
         response.addCookie(jwtCookie);
         return ResponseEntity.ok().body(defaultResponse);
     }

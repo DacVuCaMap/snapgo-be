@@ -27,30 +27,26 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         DefaultResponse defaultResponse = authService.login(loginRequest);
 
-        // Nếu login thành công, set cookie
         if (defaultResponse.isSuccess() && defaultResponse.getValue() instanceof LoginResponse loginResponse) {
             String jwt = loginResponse.getToken();
 
-            // Tạo cookie
-            Cookie jwtCookie = new Cookie("jwt", jwt);
-            jwtCookie.setHttpOnly(true);
-            jwtCookie.setSecure(true); // Set false nếu test local không dùng HTTPS
-            jwtCookie.setPath("/");
-
-            // Tính maxAge dựa trên expirationTime
+            // Tính maxAge từ thời gian hết hạn
             LocalDateTime expirationTime = loginResponse.getExpirationTime();
+            int maxAge;
             if (expirationTime != null) {
                 long secondsUntilExpiration = Duration.between(LocalDateTime.now(), expirationTime).getSeconds();
-                // Đảm bảo maxAge không âm (nếu expirationTime đã qua)
-                int maxAge = (int) Math.max(secondsUntilExpiration, 0);
-                jwtCookie.setMaxAge(maxAge);
+                maxAge = (int) Math.max(secondsUntilExpiration, 0);
             } else {
-                // Fallback nếu expirationTime null (tùy chọn)
-                jwtCookie.setMaxAge(24 * 60 * 60); // 1 ngày
+                maxAge = 24 * 60 * 60; // fallback 1 ngày
             }
 
-            // Thêm cookie vào response
-            response.addCookie(jwtCookie);
+            // Tạo Set-Cookie thủ công (hỗ trợ SameSite)
+            String cookie = String.format(
+                    "jwt=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d",
+                    jwt, maxAge
+            );
+
+            response.setHeader("Set-Cookie", cookie);
         }
 
         return ResponseEntity.ok().body(defaultResponse);

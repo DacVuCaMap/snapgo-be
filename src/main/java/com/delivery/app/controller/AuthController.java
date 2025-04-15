@@ -42,20 +42,18 @@ public class AuthController {
 
             boolean isLocal = request.getServerName().contains("localhost");
 
-            String cookie;
-            if (isLocal) {
-                cookie = String.format(
-                        "jwt=%s; Path=/; HttpOnly; SameSite=Lax; Max-Age=%d",
-                        jwt, maxAge
-                );
-            } else {
-                cookie = String.format(
-                        "jwt=%s; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=%d; Domain=.snapgo.vn",
-                        jwt, maxAge
-                );
+// Create cookie
+            Cookie jwtCookie = new Cookie("jwt", jwt);
+            jwtCookie.setHttpOnly(true);
+            jwtCookie.setPath("/");
+            jwtCookie.setMaxAge(maxAge);
+            jwtCookie.setSecure(!isLocal); // Secure for production
+            jwtCookie.setAttribute("SameSite", isLocal ? "Lax" : "None"); // SameSite setting
+            if (!isLocal) {
+                jwtCookie.setDomain("snapgo.vn"); // No leading dot
             }
 
-            response.setHeader("Set-Cookie", cookie);
+            response.addCookie(jwtCookie);
         }
 
         return ResponseEntity.ok().body(defaultResponse);
@@ -105,7 +103,7 @@ public class AuthController {
         jwtCookie.setMaxAge(0); // xóa cookie
         System.out.println("Domain: " + request.getServerName());
         if (!isLocal) {
-            jwtCookie.setDomain(".snapgo.vn"); // chỉ set domain ở production
+            jwtCookie.setDomain("snapgo.vn"); // chỉ set domain ở production
         }
 
         response.addCookie(jwtCookie);

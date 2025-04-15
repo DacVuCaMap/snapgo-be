@@ -88,9 +88,10 @@ public class AuthController {
         // Clear cookie
         Cookie jwtCookie = new Cookie("jwt", null);
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(false);
+        jwtCookie.setSecure(true); // Giống lúc set login
         jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(0);
+        jwtCookie.setDomain(".snapgo.vn"); // QUAN TRỌNG: giống domain đã set lúc login
+        jwtCookie.setMaxAge(0); // clear
         response.addCookie(jwtCookie);
         return ResponseEntity.ok().body(defaultResponse);
     }

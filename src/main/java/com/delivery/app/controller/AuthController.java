@@ -101,7 +101,6 @@ public class AuthController {
         jwtCookie.setSecure(!isLocal); // local thì không dùng Secure
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(0); // xóa cookie
-        System.out.println("Domain: " + request.getServerName());
         if (!isLocal) {
             jwtCookie.setDomain("snapgo.vn"); // chỉ set domain ở production
         }

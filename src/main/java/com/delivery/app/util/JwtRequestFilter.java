@@ -56,6 +56,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 jwt = authorizationHeader.substring(7);
             }
         }
+        if (jwt!=null){
+            email = jwtUtil.extractUsername(jwt);
+        }
         // Kiểm tra token trong database
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserSession session = userSessionRepository.findByToken(jwt)

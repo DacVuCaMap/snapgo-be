@@ -10,9 +10,11 @@ import com.delivery.app.repository.ShipperLocationRepository;
 import com.delivery.app.service.LocationService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -75,5 +77,12 @@ public class LocationImpl implements LocationService {
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return EARTH_RADIUS * c;
+    }
+
+    @Scheduled(fixedRate = 300000) // Mỗi 5 phút
+    @Transactional
+    public void cleanUpOfflineShippers() {
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(5);
+        shipperLocationRepository.deleteByLastUpdatedBeforeAndIsOnlineTrue(threshold);
     }
 }

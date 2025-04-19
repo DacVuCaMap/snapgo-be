@@ -35,7 +35,6 @@ public class LocationController {
         }
         String userName = jwtUtil.extractUsername(jwt);
         Account account = accountRepository.findByEmail(userName).orElse(null);
-        System.out.println(userName);
         if (account==null || !account.getRole().getName().equals("SHIPPER")){
             return ResponseEntity.ok().body(new DefaultResponse(400,"Tài khoản không hợp lệ",false));
         }

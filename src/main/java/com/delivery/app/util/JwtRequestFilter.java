@@ -1,8 +1,10 @@
 package com.delivery.app.util;
 
 import com.delivery.app.Entity.UserSession;
+import com.delivery.app.dto.Response.DefaultResponse;
 import com.delivery.app.repository.UserSessionRepository;
 import com.delivery.app.service.CustomUserDetailsService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -30,7 +32,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         // Bỏ qua filter cho Swagger UI và API docs
         if (path.startsWith("/swagger-ui/") || path.startsWith("/v3/api-docs/") ||
-                path.equals("/swagger-ui.html") || path.startsWith("/api-docs/")) {
+                path.equals("/swagger-ui.html") || path.startsWith("/api-docs/") || path.startsWith("/api/auth")) {
             chain.doFilter(request, response);
             return;
         }
@@ -56,23 +58,47 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 jwt = authorizationHeader.substring(7);
             }
         }
-        if (jwt!=null){
-            email = jwtUtil.extractUsername(jwt);
-        }
-        // Kiểm tra token trong database
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserSession session = userSessionRepository.findByToken(jwt)
-                    .orElse(null); // Không ném exception ngay để tiếp tục kiểm tra
-            if (session != null && session.isActive()) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
-                if (jwtUtil.validateToken(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+
+        try {
+            if (jwt != null) {
+                email = jwtUtil.extractUsername(jwt);
             }
+
+            // Kiểm tra token trong database
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserSession session = userSessionRepository.findByToken(jwt)
+                        .orElse(null); // Không ném exception ngay để tiếp tục kiểm tra
+                if (session != null && session.isActive()) {
+                    UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
+                    if (jwtUtil.validateToken(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else {
+                        sendErrorResponse(response, "Token không phù hợp");
+                        return;
+                    }
+                } else {
+                    sendErrorResponse(response, "Phiên chưa kích hoạt hoặc không tìm thấy");
+                    return;
+                }
+            } else if (jwt == null) {
+                sendErrorResponse(response, "Không tìm thấy token");
+                return;
+            }
+
+            chain.doFilter(request, response);
+        } catch (Exception e) {
+            sendErrorResponse(response, "Xác thực không hòàn tất: " + e.getMessage());
         }
-        chain.doFilter(request, response);
+    }
+
+    // Phương thức hỗ trợ để gửi response lỗi tùy chỉnh
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        DefaultResponse defaultResponse = new DefaultResponse(403, message, false);
+        response.setContentType("application/json");
+        ObjectMapper objectMapper = new ObjectMapper();
+        response.getWriter().write(objectMapper.writeValueAsString(defaultResponse));
     }
 }

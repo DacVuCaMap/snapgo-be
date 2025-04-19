@@ -32,7 +32,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         // Bỏ qua filter cho Swagger UI và API docs
         if (path.startsWith("/swagger-ui/") || path.startsWith("/v3/api-docs/") ||
-                path.equals("/swagger-ui.html") || path.startsWith("/api-docs/") || path.startsWith("/api/auth")) {
+                path.equals("/swagger-ui.html") || path.startsWith("/api-docs/") || path.startsWith("/api/auth") || path.startsWith("/api/vietmap/style")) {
             chain.doFilter(request, response);
             return;
         }

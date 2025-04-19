@@ -61,7 +61,7 @@ public class LocationImpl implements LocationService {
                             distance
                     );
                 })
-                .filter(dto -> dto != null && dto.getDistance() <= 10) // Bán kính 10km
+                .filter(dto -> dto != null && dto.getDistance() <= 20) // Bán kính 10km
                 .sorted(Comparator.comparingDouble(ShipperLocationDto::getDistance))
                 .limit(5)
                 .collect(Collectors.toList());

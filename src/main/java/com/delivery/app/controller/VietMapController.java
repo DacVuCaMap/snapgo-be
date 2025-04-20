@@ -24,7 +24,6 @@ public class VietMapController {
     @GetMapping("/style")
     public ResponseEntity<byte[]> getStyle() {
         String url = "https://maps.vietmap.vn/mt/tm/style.json?apikey=" + vietMapToken;
-        System.out.println(".");
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
@@ -73,11 +72,12 @@ public class VietMapController {
 
     // 4. Autocomplete by text
     @GetMapping("/autocomplete")
-    public ResponseEntity<String> autocomplete(@RequestParam String text) {
+    public ResponseEntity<String> autocomplete(@RequestParam String text,@RequestParam String lat,@RequestParam String lng) {
         String url = String.format(
-                "https://maps.vietmap.vn/api/autocomplete/v3?apikey=%s&text=%s",
+                "https://maps.vietmap.vn/api/autocomplete/v3?apikey=%s&text=%s&focus=%s,%s",
                 vietMapToken,
-                text
+                text,
+                lat,lng
         );
         // Gửi yêu cầu tới Vietmap API
         ResponseEntity<String> vietmapResponse = restTemplate.exchange(url, HttpMethod.GET, null, String.class);

@@ -11,4 +11,5 @@ import java.util.List;
 public interface LocationService {
     ResponseEntity<?> updateLocation(ShipperLocationUpdateRequest request,Long shipperId);
     List<ShipperLocationDto> findNearestShippers(double lat, double lng,Integer status);
+    ResponseEntity<?> findNearStore(double lat,double lng,Integer status);
 }

@@ -11,4 +11,7 @@ public class RegisterRequest {
     private String firstName;
     private String lastName;
     private String roleName;
+    private Double lat;
+    private Double lng;
+    private String storeName;
 }

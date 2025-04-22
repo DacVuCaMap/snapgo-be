@@ -3,13 +3,14 @@ package com.delivery.app.service;
 import lombok.AllArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class EmailService {
     private final JavaMailSender mailSender;
-
+    @Async
     public void sendActivationEmail(String toEmail, String activationCode) {
         String subject = "SnapGo - Mã kích hoạt tài khoản của bạn";
 

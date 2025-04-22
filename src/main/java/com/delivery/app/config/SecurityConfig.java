@@ -45,7 +45,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll()
-                        .requestMatchers("/api/auth/*","/api/vietmap/style").permitAll() // Cho phép endpoint login
+                        .requestMatchers("/api/auth/*","/api/vietmap/style","/api/vietmap/autocomplete","/api/vietmap/place").permitAll() // Cho phép endpoint login
                         .anyRequest().authenticated() // Các request khác cần xác thực
                 )
                 .sessionManagement(session -> session

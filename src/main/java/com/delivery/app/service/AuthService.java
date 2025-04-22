@@ -1,15 +1,11 @@
 package com.delivery.app.service;
 
-import com.delivery.app.Entity.Account;
-import com.delivery.app.Entity.Role;
-import com.delivery.app.Entity.UserSession;
+import com.delivery.app.Entity.*;
 import com.delivery.app.dto.LoginRequest;
 import com.delivery.app.dto.LoginResponse;
 import com.delivery.app.dto.Request.RegisterRequest;
 import com.delivery.app.dto.Response.DefaultResponse;
-import com.delivery.app.repository.AccountRepository;
-import com.delivery.app.repository.RoleRepository;
-import com.delivery.app.repository.UserSessionRepository;
+import com.delivery.app.repository.*;
 import com.delivery.app.util.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -41,6 +38,8 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final UserSessionRepository userSessionRepository;
     private final EmailService emailService;
+    private final PendingAccountRepository pendingAccountRepository;
+    private final StoreRepository storeRepository;
 
     public DefaultResponse login(LoginRequest loginRequest){
         try {
@@ -81,29 +80,66 @@ public class AuthService {
         if (accountRepository.existsByEmail(registerRequest.getEmail())) {
             return new DefaultResponse(409,"Account already exists.",false);
         }
-        Account newAcc = modelMapper.map(registerRequest, Account.class);
+//        Account newAcc = modelMapper.map(registerRequest, Account.class);
+        PendingAccount newPendingAcc = modelMapper.map(registerRequest,PendingAccount.class);
+        PendingAccount existPending = pendingAccountRepository.findByEmail(newPendingAcc.getEmail()).orElse(null);
+        if (existPending!=null){
+            newPendingAcc.setId(existPending.getId());
+        }
         // encoder password
         Role defaultRole = roleRepository.findByName(registerRequest.getRoleName())
                 .orElse(null);
         if (defaultRole == null) {
             return new DefaultResponse(404, "Không tìm thấy: " + registerRequest.getRoleName(), false);
         }
-        newAcc.setRole(defaultRole);
-        newAcc.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
-        //save
-        accountRepository.save(newAcc);
-
+        newPendingAcc.setRole(defaultRole);
+        newPendingAcc.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         /// active code
 
-        int code = 100000 + new Random().nextInt(900000);
+//        int code = 100000 + new Random().nextInt(900000);
+        int code = 000000;
         String activationCode = String.valueOf(code);
+        newPendingAcc.setActivationToken(activationCode);
+        newPendingAcc.setTokenExpiry(LocalDateTime.now().plusHours(24));
 
-        // Gửi email
-        emailService.sendActivationEmail(newAcc.getEmail(), activationCode);
-        return new DefaultResponse(200,"Register success: "+newAcc.getEmail(),true);
+        pendingAccountRepository.save(newPendingAcc);
+
+//        // Gửi email
+//        try {
+//            emailService.sendActivationEmail(newPendingAcc.getEmail(), activationCode);
+//        } catch (Exception e) {
+//            System.err.println("Không thể gửi email kích hoạt cho {}: {}" + newPendingAcc.getEmail() + e.getMessage());
+//        }
+        return new DefaultResponse(200,"Register success: "+newPendingAcc.getEmail(),true);
     }
+    @Transactional
+    public DefaultResponse activateAccount(String email,String activationToken) {
+        PendingAccount pendingAccount = pendingAccountRepository.findByEmail(email)
+                .orElse(null);
+        if (pendingAccount == null || !pendingAccount.getActivationToken().equals(activationToken)) {
+            return new DefaultResponse(404, "Mã kích hoạt không hợp lệ.", false);
+        }
 
+        if (pendingAccount.getTokenExpiry().isBefore(LocalDateTime.now())) {
+            return new DefaultResponse(400, "Mã kích hoạt đã hết hạn.", false);
+        }
+
+        // Ánh xạ sang Account
+        Account account = modelMapper.map(pendingAccount, Account.class);
+        Account newAcc = accountRepository.save(account);
+        /// tao store
+        if (pendingAccount.getRole().getName().equals("PARTNER")){
+            Store newStore = modelMapper.map(pendingAccount,Store.class);
+            newStore.setAccount(newAcc);
+            storeRepository.save(newStore);
+
+        }
+        // Xóa bản ghi pending
+        pendingAccountRepository.delete(pendingAccount);
+
+        return new DefaultResponse(200, "Kích hoạt tài khoản thành công: " + account.getEmail(), true);
+    }
     public DefaultResponse logoutAccount (String jwt){
         UserSession session = userSessionRepository.findByToken(jwt).orElse(null);
         if (session == null){

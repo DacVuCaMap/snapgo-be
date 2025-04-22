@@ -32,7 +32,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         // Bỏ qua filter cho Swagger UI và API docs
         if (path.startsWith("/swagger-ui/") || path.startsWith("/v3/api-docs/") ||
-                path.equals("/swagger-ui.html") || path.startsWith("/api-docs/") || path.startsWith("/api/auth") || path.startsWith("/api/vietmap/style")) {
+                path.equals("/swagger-ui.html") || path.startsWith("/api-docs/") ||
+                path.startsWith("/api/auth") || path.startsWith("/api/vietmap/style") ||
+                path.startsWith("/api/vietmap/autocomplete") || path.equals("/api/vietmap/place")) {
             chain.doFilter(request, response);
             return;
         }
@@ -90,15 +92,22 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
             chain.doFilter(request, response);
         } catch (Exception e) {
+            System.err.println("Lỗi xác thực: " + e.getMessage());
             sendErrorResponse(response, "Xác thực không hòàn tất: " + e.getMessage());
         }
     }
 
     // Phương thức hỗ trợ để gửi response lỗi tùy chỉnh
     private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
-        DefaultResponse defaultResponse = new DefaultResponse(403, message, false);
-        response.setContentType("application/json");
-        ObjectMapper objectMapper = new ObjectMapper();
-        response.getWriter().write(objectMapper.writeValueAsString(defaultResponse));
+        if (!response.isCommitted()) {
+            DefaultResponse defaultResponse = new DefaultResponse(403, message, false);
+            response.setContentType("application/json");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            ObjectMapper objectMapper = new ObjectMapper();
+            response.getWriter().write(objectMapper.writeValueAsString(defaultResponse));
+            System.out.println("Gửi phản hồi lỗi: " + message); // In thông báo lỗi ra console
+        } else {
+            System.err.println("Response đã được commit, không thể gửi lỗi: " + message); // In lỗi ra console
+        }
     }
 }

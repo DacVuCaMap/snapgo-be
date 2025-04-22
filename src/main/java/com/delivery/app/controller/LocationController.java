@@ -1,9 +1,11 @@
 package com.delivery.app.controller;
 
 import com.delivery.app.Entity.Account;
+import com.delivery.app.Entity.Store;
 import com.delivery.app.dto.Request.ShipperLocationUpdateRequest;
 import com.delivery.app.dto.Response.DefaultResponse;
 import com.delivery.app.dto.ShipperLocationDto;
+import com.delivery.app.dto.StoreDto;
 import com.delivery.app.repository.AccountRepository;
 import com.delivery.app.service.AccountService;
 import com.delivery.app.service.LocationService;
@@ -49,5 +51,12 @@ public class LocationController {
 
         List<ShipperLocationDto> shipperLocationDtos = locationService.findNearestShippers(lat,lng,status);
         return ResponseEntity.ok().body(new DefaultResponse(200,"Tìm thành công",shipperLocationDtos,true));
+    }
+    @GetMapping("/store-location/near")
+    public ResponseEntity<?> findNearStore(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng,
+            @RequestParam("status") Integer status ){
+        return locationService.findNearStore(lat,lng,status);
     }
 }

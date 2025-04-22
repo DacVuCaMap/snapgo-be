@@ -23,6 +23,7 @@ public class VietMapController {
     // 1. Get Style
     @GetMapping("/style")
     public ResponseEntity<byte[]> getStyle() {
+        System.out.println("style1");
         String url = "https://maps.vietmap.vn/mt/tm/style.json?apikey=" + vietMapToken;
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -42,6 +43,7 @@ public class VietMapController {
             @RequestParam String start,
             @RequestParam String end
     ) {
+        System.out.println("route1");
         String url = String.format(
                 "https://maps.vietmap.vn/api/route?api-version=1.1&apikey=%s&point=%s&point=%s&vehicle=bike",
                 vietMapToken,
@@ -58,6 +60,7 @@ public class VietMapController {
     // 3. Get Address by RefId
     @GetMapping("/place")
     public ResponseEntity<String> getPlaceByRefId(@RequestParam String refId) {
+        System.out.println("place1");
         String url = String.format(
                 "https://maps.vietmap.vn/api/place/v3?apikey=%s&refid=%s",
                 vietMapToken,
@@ -72,13 +75,25 @@ public class VietMapController {
 
     // 4. Autocomplete by text
     @GetMapping("/autocomplete")
-    public ResponseEntity<String> autocomplete(@RequestParam String text,@RequestParam String lat,@RequestParam String lng) {
-        String url = String.format(
-                "https://maps.vietmap.vn/api/autocomplete/v3?apikey=%s&text=%s&focus=%s,%s",
-                vietMapToken,
-                text,
-                lat,lng
-        );
+    public ResponseEntity<String> autocomplete(
+            @RequestParam String text,
+            @RequestParam(required = false) String lat,
+            @RequestParam(required = false) String lng) {
+
+        System.out.println("auto");
+        String url;
+        if (lat != null && lng != null) {
+            url = String.format(
+                    "https://maps.vietmap.vn/api/autocomplete/v3?apikey=%s&text=%s&focus=%s,%s",
+                    vietMapToken, text, lat, lng
+            );
+        } else {
+            url = String.format(
+                    "https://maps.vietmap.vn/api/autocomplete/v3?apikey=%s&text=%s",
+                    vietMapToken, text
+            );
+        }
+
         // Gửi yêu cầu tới Vietmap API
         ResponseEntity<String> vietmapResponse = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
 
@@ -86,7 +101,6 @@ public class VietMapController {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json");
 
-        // Trả về body từ Vietmap với header được kiểm soát
         return new ResponseEntity<>(vietmapResponse.getBody(), headers, vietmapResponse.getStatusCode());
     }
 }

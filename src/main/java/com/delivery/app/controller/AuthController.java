@@ -10,10 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -61,6 +58,11 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerAccount(@RequestBody RegisterRequest registerRequest){
         DefaultResponse defaultResponse = authService.registerAccount(registerRequest);
+        return ResponseEntity.ok().body(defaultResponse);
+    }
+    @GetMapping("/active")
+    public ResponseEntity<?> activeAccount (@RequestParam String code,@RequestParam String email){
+        DefaultResponse defaultResponse = authService.activateAccount(email,code);
         return ResponseEntity.ok().body(defaultResponse);
     }
 

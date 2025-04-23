@@ -63,6 +63,7 @@ public class LocationImpl implements LocationService {
                             account.getAvatar(),
                             account.getFirstName(),
                             account.getLastName(),
+                            account.getEmail(),
                             account.getPhoneNumber(),
                             sl.getLatitude(),
                             sl.getLongitude(),

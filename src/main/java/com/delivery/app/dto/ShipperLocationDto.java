@@ -9,16 +9,18 @@ public class ShipperLocationDto {
     private String avatar;
     private String firstName;
     private String lastName;
+    private String email;
     private String phoneNumber;
     private Double latitude;
     private Double longitude;
     private Double distance;
 
-    public ShipperLocationDto(Long shipperId, String avatar, String firstName, String lastName, String phoneNumber, Double latitude, Double longitude, Double distance) {
+    public ShipperLocationDto(Long shipperId, String avatar, String firstName, String lastName, String email, String phoneNumber, Double latitude, Double longitude, Double distance) {
         this.shipperId = shipperId;
         this.avatar = avatar;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.email = email;
         this.phoneNumber = phoneNumber;
         this.latitude = latitude;
         this.longitude = longitude;

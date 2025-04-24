@@ -30,15 +30,16 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         String path = request.getRequestURI();
+
         // Bỏ qua filter cho Swagger UI và API docs
         if (path.startsWith("/swagger-ui/") || path.startsWith("/v3/api-docs/") ||
-                path.equals("/swagger-ui.html") || path.startsWith("/api-docs/") ||
+                path.equals("/swagger-ui.html") || path.startsWith("/api-docs") ||
                 path.startsWith("/api/auth") || path.startsWith("/api/vietmap/style") ||
                 path.startsWith("/api/vietmap/autocomplete") || path.equals("/api/vietmap/place")) {
             chain.doFilter(request, response);
             return;
         }
-
+        System.out.println(path);
         String email = null;
         String jwt = null;
 

@@ -19,7 +19,9 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -58,5 +60,44 @@ public class LocationController {
             @RequestParam("lng") double lng,
             @RequestParam("status") Integer status ){
         return locationService.findNearStore(lat,lng,status);
+    }
+    @GetMapping("/route/price")
+    public ResponseEntity<?> calPriceByRoute(@RequestParam Double distance, @RequestParam String weightLabel) {
+        try {
+            // Validate input
+            if (distance == null || distance < 0 || weightLabel == null || weightLabel.isEmpty()) {
+                return ResponseEntity.badRequest().body("Distance and weightLabel must be provided and valid.");
+            }
+
+            // Calculate base fee
+            double baseFee;
+            if (distance <= 1) {
+                baseFee = 10000;
+            } else {
+                baseFee = Math.floor(distance - 1) * 2000 + 10000;
+            }
+
+            // Define weight fees
+            Map<String, Integer> weightFees = new HashMap<>();
+            weightFees.put("0-5kg", 0);
+            weightFees.put("5-10kg", 15000);
+            weightFees.put("10-15kg", 20000);
+            weightFees.put("15-20kg", 25000);
+            weightFees.put("20-25kg", 30000);
+            weightFees.put("25-30kg", 35000);
+            weightFees.put("30-50kg", 45000);
+
+            // Get extra fee based on weightLabel
+            Integer extraFee = weightFees.getOrDefault(weightLabel, 0);
+
+            // Calculate total fee
+            double totalFee = baseFee + extraFee;
+
+            // Return response
+            return ResponseEntity.ok().body(new DefaultResponse(200,"thanh cong",totalFee,true));
+        } catch (Exception e) {
+
+            return ResponseEntity.ok().body(new DefaultResponse(400,"Error calculating price: " + e.getMessage(),false));
+        }
     }
 }

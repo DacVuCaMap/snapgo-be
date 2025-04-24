@@ -23,11 +23,9 @@ public class VietMapController {
     // 1. Get Style
     @GetMapping("/style")
     public ResponseEntity<byte[]> getStyle() {
-        System.out.println("style1");
         String url = "https://maps.vietmap.vn/mt/tm/style.json?apikey=" + vietMapToken;
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-
         HttpEntity<String> entity = new HttpEntity<>(headers);
         ResponseEntity<byte[]> response = restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
 

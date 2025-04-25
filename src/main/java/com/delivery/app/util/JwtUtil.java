@@ -16,7 +16,7 @@ import java.util.function.Function;
 public class JwtUtil {
     @Value("${jwt.secret}")
     private String SECRET_KEY; // Thay bằng khóa bí mật mạnh
-    private long JWT_EXPIRATION = 1000 * 60 * 60 * 10; // 10 giờ
+    private long JWT_EXPIRATION = 1000 * 60 * 60 * 10*30; // 10 giờ
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
